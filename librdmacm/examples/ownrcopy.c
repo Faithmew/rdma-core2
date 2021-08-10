@@ -179,7 +179,7 @@ static void msg_send_resp(int rs, struct msg_hdr *msg, uint32_t status)
 	rsend(rs, (char *) &resp, sizeof resp, 0);
 }
 
-static int server_listen(void)
+static int server_listen(void) //keep as it is, nothing to change for now
 {
 	struct addrinfo hints, *res;
 	int ret, rs;
@@ -335,7 +335,7 @@ out:
 	msg_send_resp(rs, msg, ret);
 	return ret;
 }
-
+// we will try to use _recieve function instead of the _process funktion
 static void server_process(int rs)
 {
 	struct msg_hdr msg;
@@ -376,26 +376,23 @@ static int server_run(void)
 	if (lrs < 0)
 		return lrs;
 
-	//while (1) {
+	//while (1) { // no need for the while(true){}
 		len = sizeof rsa;
 		printf("waiting for connection...");
 		fflush(NULL);
 		rs = raccept(lrs, &rsa.sa, &len);
 
 		printf("client: %s\n", _ntop(&rsa));
-		//server_process(rs);
-		char buffer[17];
-            memset( buffer, 0, sizeof(buffer) );
-           _recv(rs, buffer, sizeof(buffer)-1 );
-            buffer[16] = 0;
-            printf("received buffer: %s", buffer);
+		//maybe server_recieve() function instead of the _process?
+		server_process(rs);
+
 		rshutdown(rs, SHUT_RDWR);
 		rclose(rs);
 	//}
 	return 0;
 }
 
-static int client_connect(void)
+static int client_connect(void) // Keep as it is, no changes to make at beginning
 {
 	struct addrinfo *res;
 	int ret, rs;
@@ -423,103 +420,107 @@ free:
 	return rs;
 }
 
-static int client_open(int rs)
-{
-	struct msg_open *msg;
-	struct stat stats;
-	uint32_t len;
-	int ret;
+// No need for the client_open function for now
 
-	printf("opening...");
-	fflush(NULL);
-	fd = open(src_file, O_RDONLY);
-	if (fd < 0)
-		return fd;
+// static int client_open(int rs)
+// {
+// 	struct msg_open *msg;
+// 	struct stat stats;
+// 	uint32_t len;
+// 	int ret;
 
-	ret = fstat(fd, &stats);
-	if (ret < 0)
-		goto err1;
+// 	printf("opening...");
+// 	fflush(NULL);
+// 	fd = open(src_file, O_RDONLY);
+// 	if (fd < 0)
+// 		return fd;
 
-	bytes = (uint64_t) stats.st_size;
-	file_addr = mmap(NULL, bytes, PROT_READ, MAP_SHARED, fd, 0);
-	if (file_addr == (void *) -1) {
-		ret = errno;
-		goto err1;
-	}
+// 	ret = fstat(fd, &stats);
+// 	if (ret < 0)
+// 		goto err1;
 
-	len = (((uint32_t) strlen(dst_file)) + 8) & 0xFFFFFFF8;
-	msg = calloc(1, sizeof(*msg) + len);
-	if (!msg) {
-		ret = -1;
-		goto err2;
-	}
+// 	bytes = (uint64_t) stats.st_size;
+// 	file_addr = mmap(NULL, bytes, PROT_READ, MAP_SHARED, fd, 0);
+// 	if (file_addr == (void *) -1) {
+// 		ret = errno;
+// 		goto err1;
+// 	}
 
-	msg->hdr.command = CMD_OPEN;
-	msg->hdr.len = sizeof(*msg) + len;
-	msg->hdr.data = (uint32_t) stats.st_mode;
-	strcpy(msg->path, dst_file);
-	ret = rsend(rs, msg, msg->hdr.len, 0);
-	if (ret != msg->hdr.len)
-		goto err3;
+// 	len = (((uint32_t) strlen(dst_file)) + 8) & 0xFFFFFFF8;
+// 	msg = calloc(1, sizeof(*msg) + len);
+// 	if (!msg) {
+// 		ret = -1;
+// 		goto err2;
+// 	}
 
-	ret = msg_get_resp(rs, &msg->hdr, CMD_OPEN);
-	if (ret)
-		goto err3;
+// 	msg->hdr.command = CMD_OPEN;
+// 	msg->hdr.len = sizeof(*msg) + len;
+// 	msg->hdr.data = (uint32_t) stats.st_mode;
+// 	strcpy(msg->path, dst_file);
+// 	ret = rsend(rs, msg, msg->hdr.len, 0);
+// 	if (ret != msg->hdr.len)
+// 		goto err3;
 
-	return 0;
+// 	ret = msg_get_resp(rs, &msg->hdr, CMD_OPEN);
+// 	if (ret)
+// 		goto err3;
 
-err3:
-	free(msg);
-err2:
-	munmap(file_addr, bytes);
-err1:
-	close(fd);
-	return ret;
-}
+// 	return 0;
 
-static int client_start_write(int rs)
-{
-	struct msg_write msg;
-	int ret;
+// err3:
+// 	free(msg);
+// err2:
+// 	munmap(file_addr, bytes);
+// err1:
+// 	close(fd);
+// 	return ret;
+// }
 
-	printf("transferring");
-	fflush(NULL);
-	memset(&msg, 0, sizeof msg);
-	msg.hdr.command = CMD_WRITE;
-	msg.hdr.len = sizeof(msg);
-	msg.size = bytes;
+// Same here, no need
 
-	ret = rsend(rs, &msg, sizeof msg, 0);
-	if (ret != msg.hdr.len)
-		return ret;
+// static int client_start_write(int rs)
+// {
+// 	struct msg_write msg;
+// 	int ret;
 
-	return 0;
-}
+// 	printf("transferring");
+// 	fflush(NULL);
+// 	memset(&msg, 0, sizeof msg);
+// 	msg.hdr.command = CMD_WRITE;
+// 	msg.hdr.len = sizeof(msg);
+// 	msg.size = bytes;
 
-static int client_close(int rs)
-{
-	struct msg_hdr msg;
-	int ret;
+// 	ret = rsend(rs, &msg, sizeof msg, 0);
+// 	if (ret != msg.hdr.len)
+// 		return ret;
 
-	printf("closing...");
-	fflush(NULL);
-	memset(&msg, 0, sizeof msg);
-	msg.command = CMD_CLOSE;
-	msg.len = sizeof msg;
-	ret = rsend(rs, (char *) &msg, msg.len, 0);
-	if (ret != msg.len)
-		goto out;
+// 	return 0;
+// }
 
-	ret = msg_get_resp(rs, &msg, CMD_CLOSE);
-	if (ret)
-		goto out;
+// static int client_close(int rs)
+// {
+// 	struct msg_hdr msg;
+// 	int ret;
 
-	printf("done\n");
-out:
-	munmap(file_addr, bytes);
-	close(fd);
-	return ret;
-}
+// 	printf("closing...");
+// 	fflush(NULL);
+// 	memset(&msg, 0, sizeof msg);
+// 	msg.command = CMD_CLOSE;
+// 	msg.len = sizeof msg;
+// 	ret = rsend(rs, (char *) &msg, msg.len, 0);
+// 	if (ret != msg.len)
+// 		goto out;
+
+// 	ret = msg_get_resp(rs, &msg, CMD_CLOSE);
+// 	if (ret)
+// 		goto out;
+
+// 	printf("done\n");
+// out:
+// 	munmap(file_addr, bytes);
+// 	close(fd);
+// 	return ret;
+// }
 
 static int client_run(void)
 {
@@ -530,6 +531,8 @@ static int client_run(void)
 	rs = client_connect();
 	if (rs < 0)
 		return rs;
+
+	// No need for the client_open and client_start_write function 
 
 	// ret = client_open(rs);
 	// if (ret)
@@ -542,26 +545,22 @@ static int client_run(void)
 	printf("...");
 	fflush(NULL);
 	gettimeofday(&start, NULL);
-	// len = rsend(rs, file_addr, bytes, 0);
-	// if (len == bytes)
-	// 	ret = msg_get_resp(rs, &ack, CMD_WRITE);
-	// else
-	// 	ret = (int) len;
-	char buffer[16];
-    memset( buffer, 'A', sizeof( buffer ) );
-    len = rsend(rs, buffer, sizeof( buffer ), 0);
-    printf( "send %d bytes", len );
+	len = rsend(rs, file_addr, bytes, 0);
+	if (len == bytes)
+		ret = msg_get_resp(rs, &ack, CMD_WRITE);
+	else
+		ret = (int) len;
+
 	gettimeofday(&end, NULL);
 
-// close:
-// 	client_close(rs);
+close:
+	//client_close(rs);
 shutdown:
 	rshutdown(rs, SHUT_RDWR);
 	rclose(rs);
-	// if (!ret)
-	// 	show_perf();
-	// return ret;
-	return 0;
+	if (!ret)
+		show_perf();
+	return ret;
 }
 
 static void show_usage(char *program)
@@ -596,36 +595,44 @@ static void client_opts(int argc, char **argv)
 {
 	int op;
 
-	//if (argc < 3)
-	if (argc < 2)
+	if (argc < 3)
 		show_usage(argv[0]);
 
-	// src_file = argv[1];
-	// dst_addr = argv[2];
-	// dst_file = strchr(dst_addr, ':');
-	// if (dst_file) {
-	// 	*dst_file = '\0';
-	// 	dst_file++;
-	// }
-	// if (!dst_file)
-	// 	dst_file = src_file;
+	//src_file = argv[1];
+	//dst_addr = argv[2];
+	dst_addr = argv[1];
+	dst_file = strchr(dst_addr, ':');
+	if (dst_file) {
+		*dst_file = '\0';
+		dst_file++;
+	}
+	if (!dst_file)
+		dst_file = src_file;
 
-	// while ((op = getopt(argc, argv, "p:")) != -1) {
-	// 	switch (op) {
-	// 	case 'p':
-	// 		port = optarg;
-	// 		break;
-	// 	default:
-	// 		show_usage(argv[0]);
-	// 	}
-	// }
+	while ((op = getopt(argc, argv, "p:")) != -1) {
+		switch (op) {
+		case 'p':
+			port = optarg;
+			break;
+		default:
+			show_usage(argv[0]);
+		}
+	}
 
 }
 
 int main(int argc, char **argv)
 {
 	int ret;
-
+	// creating a  1 KB Size Array
+	char *data;
+	int bytes = (1024);
+	data = (char *) malloc(bytes);
+	for(int i=0;i<bytes;i++){
+	 data[i] = (char) rand();
+ 	printf("%c",data[i]);
+	}
+	// end 
 	if (argc == 1 || argv[1][0] == '-') {
 		server_opts(argc, argv);
 		ret = server_run();
@@ -636,3 +643,7 @@ int main(int argc, char **argv)
 
 	return ret;
 }
+// What is to do:
+// After creating Array, giving it to the server_run func? and handling as the msg array buffer?
+// Maybe change the dummy Array to an Array with 'A' or sth like that
+//
