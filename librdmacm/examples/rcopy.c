@@ -601,7 +601,7 @@ static void client_opts(int argc, char **argv)
 		show_usage(argv[0]);
 
 	// src_file = argv[1];
-	// dst_addr = argv[2];
+	 dst_addr = argv[1];
 	// dst_file = strchr(dst_addr, ':');
 	// if (dst_file) {
 	// 	*dst_file = '\0';
