@@ -290,7 +290,7 @@ static void server_close(int rs, struct msg_hdr *msg)
 	printf("done\n");
 }
 
-static int server_write(int rs, struct msg_hdr *msg)
+static int server_write(int rs, struct msg_hdr *msg)//
 {
 	size_t len;
 	int ret;
@@ -336,7 +336,7 @@ out:
 	return ret;
 }
 
-static void server_process(int rs)
+static void server_process(int rs)//
 {
 	struct msg_hdr msg;
 	int ret;
@@ -388,7 +388,12 @@ static int server_run(void)
             memset( buffer, 0, sizeof(buffer) );
            _recv(rs, buffer, sizeof(buffer)-1 );
             buffer[16] = 0;
-            printf("received buffer: %s", buffer);
+            printf("received buffer: %s", buffer);// recieve data from client
+		char buffer2[16];
+    		memset( buffer2, 'B', sizeof( buffer2 ) );
+    		len = rsend(rs, buffer2, sizeof( buffer2 ), 0);
+    		printf( "send %d bytes", len2 );
+			// here rsend (rs, buffer2 ( with B or whatever to client)
 		rshutdown(rs, SHUT_RDWR);
 		rclose(rs);
 	//}
@@ -551,6 +556,13 @@ static int client_run(void)
     memset( buffer, 'A', sizeof( buffer ) );
     len = rsend(rs, buffer, sizeof( buffer ), 0);
     printf( "send %d bytes", len );
+	char buffer2[17];
+            memset( buffer2, 0, sizeof(buffer2) );
+           _recv(rs, buffer2, sizeof(buffer2)-1 );
+            buffer2[16] = 0;
+            printf("received buffer: %s", buffer2);
+			// recieve data from client
+	//_recieve() and printf() 
 	gettimeofday(&end, NULL);
 
 // close:
