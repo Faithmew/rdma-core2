@@ -179,7 +179,7 @@ static void msg_send_resp(int rs, struct msg_hdr *msg, uint32_t status)
 	rsend(rs, (char *) &resp, sizeof resp, 0);
 }
 
-static int server_listen(void)
+static int server_listen(void)//needed
 {
 	struct addrinfo hints, *res;
 	int ret, rs;
@@ -227,144 +227,144 @@ free:
 	return ret;
 }
 
-static int server_open(int rs, struct msg_hdr *msg)
-{
-	char *path = NULL;
-	int ret, len;
+// static int server_open(int rs, struct msg_hdr *msg)
+// {
+// 	char *path = NULL;
+// 	int ret, len;
 
-	printf("opening: ");
-	fflush(NULL);
-	if (file_addr || fd > 0) {
-		printf("cannot open another file\n");
-		ret = EBUSY;
-		goto out;
-	}
+// 	printf("opening: ");
+// 	fflush(NULL);
+// 	if (file_addr || fd > 0) {
+// 		printf("cannot open another file\n");
+// 		ret = EBUSY;
+// 		goto out;
+// 	}
 
-	len = msg->len - sizeof *msg;
-	path = malloc(len);
-	if (!path) {
-		printf("cannot allocate path name\n");
-		ret = ENOMEM;
-		goto out;
-	}
+// 	len = msg->len - sizeof *msg;
+// 	path = malloc(len);
+// 	if (!path) {
+// 		printf("cannot allocate path name\n");
+// 		ret = ENOMEM;
+// 		goto out;
+// 	}
 
-	ret = _recv(rs, path, len);
-	if (ret != len) {
-		printf("error receiving path\n");
-		goto out;
-	}
+// 	ret = _recv(rs, path, len);
+// 	if (ret != len) {
+// 		printf("error receiving path\n");
+// 		goto out;
+// 	}
 
-	printf("%s, ", path);
-	fflush(NULL);
-	fd = open(path, O_RDWR | O_CREAT | O_TRUNC, msg->data);
-	if (fd < 0) {
-		printf("unable to open destination file\n");
-		ret = errno;
-		goto out;
-	}
+// 	printf("%s, ", path);
+// 	fflush(NULL);
+// 	fd = open(path, O_RDWR | O_CREAT | O_TRUNC, msg->data);
+// 	if (fd < 0) {
+// 		printf("unable to open destination file\n");
+// 		ret = errno;
+// 		goto out;
+// 	}
 
-	ret = 0;
-out:
-	if (path)
-		free(path);
+// 	ret = 0;
+// out:
+// 	if (path)
+// 		free(path);
 
-	msg_send_resp(rs, msg, ret);
-	return ret;
-}
+// 	msg_send_resp(rs, msg, ret);
+// 	return ret;
+// }
 
-static void server_close(int rs, struct msg_hdr *msg)
-{
-	printf("closing...");
-	fflush(NULL);
-	msg_send_resp(rs, msg, 0);
+// static void server_close(int rs, struct msg_hdr *msg)
+// {
+// 	printf("closing...");
+// 	fflush(NULL);
+// 	msg_send_resp(rs, msg, 0);
 
-	if (file_addr) {
-		munmap(file_addr, bytes);
-		file_addr = NULL;
-	}
+// 	if (file_addr) {
+// 		munmap(file_addr, bytes);
+// 		file_addr = NULL;
+// 	}
 
-	if (fd > 0) {
-		close(fd);
-		fd = 0;
-	}
-	printf("done\n");
-}
+// 	if (fd > 0) {
+// 		close(fd);
+// 		fd = 0;
+// 	}
+// 	printf("done\n");
+// }
 
-static int server_write(int rs, struct msg_hdr *msg)//
-{
-	size_t len;
-	int ret;
+// static int server_write(int rs, struct msg_hdr *msg)//
+// {
+// 	size_t len;
+// 	int ret;
 
-	printf("transferring");
-	fflush(NULL);
-	if (fd <= 0) {
-		printf("...file not opened\n");
-		ret = EINVAL;
-		goto out;
-	}
+// 	printf("transferring");
+// 	fflush(NULL);
+// 	if (fd <= 0) {
+// 		printf("...file not opened\n");
+// 		ret = EINVAL;
+// 		goto out;
+// 	}
 
-	if (msg->len != sizeof(struct msg_write)) {
-		printf("...invalid message length %d\n", msg->len);
-		ret = EINVAL;
-		goto out;
-	}
+// 	if (msg->len != sizeof(struct msg_write)) {
+// 		printf("...invalid message length %d\n", msg->len);
+// 		ret = EINVAL;
+// 		goto out;
+// 	}
 
-	ret = _recv(rs, (char *) &bytes, sizeof bytes);
-	if (ret != sizeof bytes)
-		goto out;
+// 	ret = _recv(rs, (char *) &bytes, sizeof bytes);
+// 	if (ret != sizeof bytes)
+// 		goto out;
 
-	ret = ftruncate(fd, bytes);
-	if (ret)
-		goto out;
+// 	ret = ftruncate(fd, bytes);
+// 	if (ret)
+// 		goto out;
 
-	file_addr = mmap(NULL, bytes, PROT_WRITE, MAP_SHARED, fd, 0);
-	if (file_addr == (void *) -1) {
-		printf("...error mapping file\n");
-		ret = errno;
-		goto out;
-	}
+// 	file_addr = mmap(NULL, bytes, PROT_WRITE, MAP_SHARED, fd, 0);
+// 	if (file_addr == (void *) -1) {
+// 		printf("...error mapping file\n");
+// 		ret = errno;
+// 		goto out;
+// 	}
 
-	printf("...%lld bytes...", (long long) bytes);
-	fflush(NULL);
-	len = _recv(rs, file_addr, bytes);
-	if (len != bytes) {
-		printf("...error receiving data\n");
-		ret = (int) len;
-	}
-out:
-	msg_send_resp(rs, msg, ret);
-	return ret;
-}
+// 	printf("...%lld bytes...", (long long) bytes);
+// 	fflush(NULL);
+// 	len = _recv(rs, file_addr, bytes);
+// 	if (len != bytes) {
+// 		printf("...error receiving data\n");
+// 		ret = (int) len;
+// 	}
+// out:
+// 	msg_send_resp(rs, msg, ret);
+// 	return ret;
+// }
 
-static void server_process(int rs)//
-{
-	struct msg_hdr msg;
-	int ret;
+// static void server_process(int rs)//
+// {
+// 	struct msg_hdr msg;
+// 	int ret;
 
-	do {
-		ret = msg_recv_hdr(rs, &msg);
-		if (ret != sizeof msg)
-			break;
+// 	do {
+// 		ret = msg_recv_hdr(rs, &msg);
+// 		if (ret != sizeof msg)
+// 			break;
 
-		switch (msg.command) {
-		case CMD_OPEN:
-			ret = server_open(rs, &msg);
-			break;
-		case CMD_CLOSE:
-			server_close(rs, &msg);
-			ret = 0;
-			break;
-		case CMD_WRITE:
-			ret = server_write(rs, &msg);
-			break;
-		default:
-			msg_send_resp(rs, &msg, EINVAL);
-			ret = -1;
-			break;
-		}
+// 		switch (msg.command) {
+// 		case CMD_OPEN:
+// 			ret = server_open(rs, &msg);
+// 			break;
+// 		case CMD_CLOSE:
+// 			server_close(rs, &msg);
+// 			ret = 0;
+// 			break;
+// 		case CMD_WRITE:
+// 			ret = server_write(rs, &msg);
+// 			break;
+// 		default:
+// 			msg_send_resp(rs, &msg, EINVAL);
+// 			ret = -1;
+// 			break;
+// 		}
 
-	} while (!ret);
-}
+// 	} while (!ret);
+// }
 
 static int server_run(void)
 {
@@ -428,103 +428,103 @@ free:
 	return rs;
 }
 
-static int client_open(int rs)
-{
-	struct msg_open *msg;
-	struct stat stats;
-	uint32_t len;
-	int ret;
+// static int client_open(int rs)
+// {
+// 	struct msg_open *msg;
+// 	struct stat stats;
+// 	uint32_t len;
+// 	int ret;
 
-	printf("opening...");
-	fflush(NULL);
-	fd = open(src_file, O_RDONLY);
-	if (fd < 0)
-		return fd;
+// 	printf("opening...");
+// 	fflush(NULL);
+// 	fd = open(src_file, O_RDONLY);
+// 	if (fd < 0)
+// 		return fd;
 
-	ret = fstat(fd, &stats);
-	if (ret < 0)
-		goto err1;
+// 	ret = fstat(fd, &stats);
+// 	if (ret < 0)
+// 		goto err1;
 
-	bytes = (uint64_t) stats.st_size;
-	file_addr = mmap(NULL, bytes, PROT_READ, MAP_SHARED, fd, 0);
-	if (file_addr == (void *) -1) {
-		ret = errno;
-		goto err1;
-	}
+// 	bytes = (uint64_t) stats.st_size;
+// 	file_addr = mmap(NULL, bytes, PROT_READ, MAP_SHARED, fd, 0);
+// 	if (file_addr == (void *) -1) {
+// 		ret = errno;
+// 		goto err1;
+// 	}
 
-	len = (((uint32_t) strlen(dst_file)) + 8) & 0xFFFFFFF8;
-	msg = calloc(1, sizeof(*msg) + len);
-	if (!msg) {
-		ret = -1;
-		goto err2;
-	}
+// 	len = (((uint32_t) strlen(dst_file)) + 8) & 0xFFFFFFF8;
+// 	msg = calloc(1, sizeof(*msg) + len);
+// 	if (!msg) {
+// 		ret = -1;
+// 		goto err2;
+// 	}
 
-	msg->hdr.command = CMD_OPEN;
-	msg->hdr.len = sizeof(*msg) + len;
-	msg->hdr.data = (uint32_t) stats.st_mode;
-	strcpy(msg->path, dst_file);
-	ret = rsend(rs, msg, msg->hdr.len, 0);
-	if (ret != msg->hdr.len)
-		goto err3;
+// 	msg->hdr.command = CMD_OPEN;
+// 	msg->hdr.len = sizeof(*msg) + len;
+// 	msg->hdr.data = (uint32_t) stats.st_mode;
+// 	strcpy(msg->path, dst_file);
+// 	ret = rsend(rs, msg, msg->hdr.len, 0);
+// 	if (ret != msg->hdr.len)
+// 		goto err3;
 
-	ret = msg_get_resp(rs, &msg->hdr, CMD_OPEN);
-	if (ret)
-		goto err3;
+// 	ret = msg_get_resp(rs, &msg->hdr, CMD_OPEN);
+// 	if (ret)
+// 		goto err3;
 
-	return 0;
+// 	return 0;
 
-err3:
-	free(msg);
-err2:
-	munmap(file_addr, bytes);
-err1:
-	close(fd);
-	return ret;
-}
+// err3:
+// 	free(msg);
+// err2:
+// 	munmap(file_addr, bytes);
+// err1:
+// 	close(fd);
+// 	return ret;
+// }
 
-static int client_start_write(int rs)
-{
-	struct msg_write msg;
-	int ret;
+// static int client_start_write(int rs)
+// {
+// 	struct msg_write msg;
+// 	int ret;
 
-	printf("transferring");
-	fflush(NULL);
-	memset(&msg, 0, sizeof msg);
-	msg.hdr.command = CMD_WRITE;
-	msg.hdr.len = sizeof(msg);
-	msg.size = bytes;
+// 	printf("transferring");
+// 	fflush(NULL);
+// 	memset(&msg, 0, sizeof msg);
+// 	msg.hdr.command = CMD_WRITE;
+// 	msg.hdr.len = sizeof(msg);
+// 	msg.size = bytes;
 
-	ret = rsend(rs, &msg, sizeof msg, 0);
-	if (ret != msg.hdr.len)
-		return ret;
+// 	ret = rsend(rs, &msg, sizeof msg, 0);
+// 	if (ret != msg.hdr.len)
+// 		return ret;
 
-	return 0;
-}
+// 	return 0;
+// }
 
-static int client_close(int rs)
-{
-	struct msg_hdr msg;
-	int ret;
+// static int client_close(int rs)
+// {
+// 	struct msg_hdr msg;
+// 	int ret;
 
-	printf("closing...");
-	fflush(NULL);
-	memset(&msg, 0, sizeof msg);
-	msg.command = CMD_CLOSE;
-	msg.len = sizeof msg;
-	ret = rsend(rs, (char *) &msg, msg.len, 0);
-	if (ret != msg.len)
-		goto out;
+// 	printf("closing...");
+// 	fflush(NULL);
+// 	memset(&msg, 0, sizeof msg);
+// 	msg.command = CMD_CLOSE;
+// 	msg.len = sizeof msg;
+// 	ret = rsend(rs, (char *) &msg, msg.len, 0);
+// 	if (ret != msg.len)
+// 		goto out;
 
-	ret = msg_get_resp(rs, &msg, CMD_CLOSE);
-	if (ret)
-		goto out;
+// 	ret = msg_get_resp(rs, &msg, CMD_CLOSE);
+// 	if (ret)
+// 		goto out;
 
-	printf("done\n");
-out:
-	munmap(file_addr, bytes);
-	close(fd);
-	return ret;
-}
+// 	printf("done\n");
+// out:
+// 	munmap(file_addr, bytes);
+// 	close(fd);
+// 	return ret;
+// }
 
 static int client_run(void)
 {
@@ -589,7 +589,7 @@ static void show_usage(char *program)
 	exit(1);
 }
 
-static void server_opts(int argc, char **argv)
+static void server_opts(int argc, char **argv) // Needed
 {
 	int op;
 
@@ -604,7 +604,7 @@ static void server_opts(int argc, char **argv)
 	}
 }
 
-static void client_opts(int argc, char **argv)
+static void client_opts(int argc, char **argv)//Needed
 {
 	int op;
 
