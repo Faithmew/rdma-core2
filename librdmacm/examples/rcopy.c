@@ -392,7 +392,7 @@ static int server_run(void)
 		char buffer2[16];
     		memset( buffer2, 'B', sizeof( buffer2 ) );
     		len = rsend(rs, buffer2, sizeof( buffer2 ), 0);
-    		printf( "send %d bytes", len2 );
+    		printf( "send %d bytes", len );
 			// here rsend (rs, buffer2 ( with B or whatever to client)
 		rshutdown(rs, SHUT_RDWR);
 		rclose(rs);
